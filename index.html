@@ -1,0 +1,1159 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EasyToll - Profesjonell Tolldeklarasjon</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 50%, #312e81 100%); min-height: 100vh; }
+    
+    .app-header { background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); border-bottom: 1px solid rgba(255,255,255,0.1); padding: 16px 24px; position: sticky; top: 0; z-index: 100; }
+    .header-content { max-width: 1400px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
+    .logo { display: flex; align-items: center; gap: 12px; color: white; }
+    .logo-icon { font-size: 32px; }
+    .logo-text { font-size: 24px; font-weight: 700; }
+    .logo-badge { background: linear-gradient(135deg, #10b981, #059669); padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+    
+    .country-selector { display: flex; gap: 8px; }
+    .country-btn { background: rgba(255,255,255,0.1); border: 2px solid transparent; color: white; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600; transition: all 0.2s; }
+    .country-btn:hover { background: rgba(255,255,255,0.2); }
+    .country-btn.active { background: white; color: #1e3a8a; }
+    
+    .container { max-width: 1400px; margin: 0 auto; padding: 24px; }
+    
+    .main-grid { display: grid; grid-template-columns: 380px 1fr; gap: 24px; }
+    @media (max-width: 1100px) { .main-grid { grid-template-columns: 1fr; } }
+    
+    .card { background: white; border-radius: 16px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); overflow: hidden; }
+    
+    .card-header { background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%); color: white; padding: 20px 24px; }
+    .card-title { font-size: 18px; font-weight: 700; display: flex; align-items: center; gap: 10px; }
+    .card-subtitle { font-size: 13px; opacity: 0.8; margin-top: 4px; }
+    
+    .card-body { padding: 24px; }
+    
+    .upload-zone { border: 3px dashed #cbd5e1; border-radius: 16px; padding: 40px 24px; text-align: center; cursor: pointer; transition: all 0.3s; background: #f8fafc; }
+    .upload-zone:hover { border-color: #3b82f6; background: #eff6ff; }
+    .upload-zone.dragover { border-color: #3b82f6; background: #dbeafe; transform: scale(1.02); }
+    .upload-zone.has-file { border-color: #10b981; background: #ecfdf5; border-style: solid; }
+    .upload-zone.processing { pointer-events: none; opacity: 0.7; }
+    .upload-icon { font-size: 48px; margin-bottom: 12px; }
+    .upload-title { font-size: 18px; font-weight: 600; color: #1e293b; margin-bottom: 6px; }
+    .upload-hint { color: #64748b; font-size: 13px; margin-bottom: 12px; }
+    .upload-formats { display: flex; justify-content: center; gap: 6px; flex-wrap: wrap; }
+    .format-tag { background: #e2e8f0; padding: 4px 10px; border-radius: 8px; font-size: 11px; color: #475569; font-weight: 600; }
+    #fileInput { display: none; }
+    
+    .progress-box { margin-top: 20px; padding: 20px; background: #f0f9ff; border-radius: 12px; border: 1px solid #bae6fd; display: none; }
+    .progress-box.active { display: block; }
+    .progress-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+    .spinner { width: 20px; height: 20px; border: 3px solid #bae6fd; border-top-color: #0369a1; border-radius: 50%; animation: spin 1s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .progress-title { font-weight: 600; color: #0369a1; }
+    .progress-bar { height: 8px; background: #e0f2fe; border-radius: 4px; overflow: hidden; }
+    .progress-fill { height: 100%; background: linear-gradient(90deg, #0ea5e9, #0284c7); width: 0%; transition: width 0.3s; }
+    .progress-status { margin-top: 8px; font-size: 12px; color: #0369a1; }
+    
+    .preview-box { margin-top: 16px; display: none; }
+    .preview-box.active { display: block; }
+    .preview-img { max-width: 100%; max-height: 180px; border-radius: 10px; border: 2px solid #e2e8f0; }
+    .preview-name { margin-top: 8px; font-size: 12px; color: #64748b; text-align: center; }
+    #pdfCanvas { display: none; }
+    
+    .btn-group { display: flex; gap: 10px; margin-top: 20px; }
+    .btn { flex: 1; padding: 12px 20px; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; border: none; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 6px; }
+    .btn-primary { background: linear-gradient(135deg, #3b82f6, #1d4ed8); color: white; }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(59,130,246,0.4); }
+    .btn-success { background: linear-gradient(135deg, #10b981, #059669); color: white; }
+    .btn-success:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(16,185,129,0.4); }
+    .btn-secondary { background: #f1f5f9; color: #475569; border: 2px solid #e2e8f0; }
+    .btn-secondary:hover { background: #e2e8f0; }
+    
+    .alert { padding: 14px 18px; border-radius: 10px; margin-bottom: 20px; font-size: 13px; line-height: 1.5; }
+    .alert-info { background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; }
+    .alert-success { background: #ecfdf5; border: 1px solid #a7f3d0; color: #065f46; }
+    .alert-error { background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; }
+    .alert-warning { background: #fffbeb; border: 1px solid #fde68a; color: #92400e; }
+    
+    .ocr-results { margin-top: 16px; padding: 16px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 10px; display: none; }
+    .ocr-results.active { display: block; }
+    .ocr-results h4 { font-size: 14px; color: #166534; margin-bottom: 10px; }
+    .ocr-results ul { font-size: 12px; color: #166534; margin-left: 20px; }
+    
+    .form-section { margin-bottom: 24px; }
+    .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; padding-bottom: 10px; border-bottom: 2px solid #e2e8f0; }
+    .section-title { font-size: 15px; font-weight: 700; color: #1e293b; display: flex; align-items: center; gap: 8px; }
+    .section-badge { background: #dbeafe; color: #1d4ed8; padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 600; }
+    
+    .form-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; }
+    .form-grid-2 { grid-template-columns: repeat(2, 1fr); }
+    .form-grid-3 { grid-template-columns: repeat(3, 1fr); }
+    @media (max-width: 600px) { .form-grid-2, .form-grid-3 { grid-template-columns: 1fr; } }
+    
+    .form-group { }
+    .form-group.span-2 { grid-column: span 2; }
+    .form-label { display: block; font-size: 11px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px; }
+    .form-label .required { color: #ef4444; }
+    .form-input { width: 100%; padding: 10px 12px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 14px; transition: all 0.2s; }
+    .form-input:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
+    .form-input.filled { background: #ecfdf5; border-color: #86efac; }
+    select.form-input { cursor: pointer; }
+    
+    .items-section { background: #f8fafc; border-radius: 12px; padding: 16px; }
+    .items-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    .items-title { font-weight: 600; color: #1e293b; font-size: 14px; }
+    .items-count { background: #dbeafe; color: #1d4ed8; padding: 2px 10px; border-radius: 10px; font-size: 12px; font-weight: 600; }
+    .items-table-wrap { overflow-x: auto; }
+    .items-table { width: 100%; border-collapse: collapse; font-size: 12px; min-width: 700px; }
+    .items-table th { background: #e2e8f0; padding: 10px 6px; text-align: left; font-weight: 600; color: #475569; font-size: 10px; text-transform: uppercase; }
+    .items-table td { padding: 4px; border-bottom: 1px solid #e2e8f0; vertical-align: top; }
+    .items-table input, .items-table select { width: 100%; padding: 6px 8px; border: 1px solid #e2e8f0; border-radius: 4px; font-size: 12px; }
+    .items-table input:focus, .items-table select:focus { outline: none; border-color: #3b82f6; }
+    .items-table input.filled { background: #ecfdf5; border-color: #86efac; }
+    .remove-row { background: #fee2e2; color: #dc2626; border: none; width: 24px; height: 24px; border-radius: 4px; cursor: pointer; font-size: 12px; }
+    .remove-row:hover { background: #fecaca; }
+    
+    .export-section { background: #f8fafc; border-radius: 12px; padding: 20px; }
+    .export-options { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 16px; }
+    @media (max-width: 500px) { .export-options { grid-template-columns: repeat(2, 1fr); } }
+    .export-opt { padding: 12px 8px; background: white; border: 2px solid #e2e8f0; border-radius: 10px; cursor: pointer; text-align: center; transition: all 0.2s; }
+    .export-opt:hover { border-color: #cbd5e1; }
+    .export-opt.selected { border-color: #3b82f6; background: #eff6ff; }
+    .export-opt-icon { font-size: 22px; margin-bottom: 4px; }
+    .export-opt-label { font-weight: 700; font-size: 12px; }
+    .export-opt-desc { font-size: 10px; color: #64748b; margin-top: 2px; }
+    
+    .code-preview { background: #1e293b; border-radius: 10px; padding: 16px; margin: 16px 0; max-height: 280px; overflow: auto; }
+    .code-preview pre { font-family: 'Monaco', 'Consolas', monospace; font-size: 11px; color: #94a3b8; white-space: pre-wrap; word-break: break-all; line-height: 1.5; margin: 0; }
+    
+    .export-actions { display: flex; gap: 10px; }
+    
+    .stats-bar { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 24px; }
+    @media (max-width: 600px) { .stats-bar { grid-template-columns: repeat(2, 1fr); } }
+    .stat-item { text-align: center; padding: 16px 12px; background: rgba(255,255,255,0.1); border-radius: 12px; }
+    .stat-value { font-size: 22px; font-weight: 700; color: white; }
+    .stat-label { font-size: 11px; color: rgba(255,255,255,0.7); text-transform: uppercase; margin-top: 4px; }
+    
+    .tabs { display: flex; gap: 4px; margin-bottom: 20px; background: #f1f5f9; padding: 4px; border-radius: 10px; overflow-x: auto; }
+    .tab { flex: 1; padding: 10px 12px; text-align: center; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600; color: #64748b; transition: all 0.2s; white-space: nowrap; }
+    .tab:hover { color: #1e293b; }
+    .tab.active { background: white; color: #1e293b; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    
+    .footer { text-align: center; padding: 32px; color: rgba(255,255,255,0.6); font-size: 13px; }
+    .footer a { color: rgba(255,255,255,0.8); }
+    
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+  <header class="app-header">
+    <div class="header-content">
+      <div class="logo">
+        <span class="logo-icon">📋</span>
+        <span class="logo-text">EasyToll</span>
+        <span class="logo-badge">PRO</span>
+      </div>
+      <div class="country-selector">
+        <button class="country-btn active" data-country="NO">🇳🇴 Norge</button>
+        <button class="country-btn" data-country="SE">🇸🇪 Sverige</button>
+        <button class="country-btn" data-country="DK">🇩🇰 Danmark</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="container">
+    <div class="stats-bar">
+      <div class="stat-item">
+        <div class="stat-value" id="statItems">0</div>
+        <div class="stat-label">Varelinjer</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value" id="statWeight">0 kg</div>
+        <div class="stat-label">Total vekt</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value" id="statValue">0</div>
+        <div class="stat-label">Verdi</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value" id="statStatus">⏳</div>
+        <div class="stat-label">Status</div>
+      </div>
+    </div>
+
+    <div class="main-grid">
+      <!-- Left Panel -->
+      <div>
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">📄 Dokumentopplasting</div>
+            <div class="card-subtitle">Last opp faktura for automatisk utfylling</div>
+          </div>
+          <div class="card-body">
+            <div class="upload-zone" id="uploadZone">
+              <div class="upload-icon">📄</div>
+              <div class="upload-title">Last opp faktura</div>
+              <div class="upload-hint">Dra og slipp, eller klikk</div>
+              <div class="upload-formats">
+                <span class="format-tag">PDF</span>
+                <span class="format-tag">PNG</span>
+                <span class="format-tag">JPG</span>
+              </div>
+            </div>
+            <input type="file" id="fileInput" accept="image/*,.pdf,application/pdf">
+            
+            <div class="progress-box" id="progressBox">
+              <div class="progress-header">
+                <div class="spinner"></div>
+                <div class="progress-title">Behandler dokument...</div>
+              </div>
+              <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+              <div class="progress-status" id="progressStatus">Starter...</div>
+            </div>
+            
+            <div class="preview-box" id="previewBox">
+              <img id="previewImg" class="preview-img" alt="Forhåndsvisning">
+              <div class="preview-name" id="fileName"></div>
+            </div>
+            <canvas id="pdfCanvas"></canvas>
+            
+            <div class="ocr-results" id="ocrResults">
+              <h4>✅ Ekstraherte data:</h4>
+              <ul id="ocrResultsList"></ul>
+            </div>
+            
+            <div class="btn-group">
+              <button class="btn btn-success" id="demoBtn">🎯 Demo</button>
+              <button class="btn btn-secondary" id="resetBtn">🔄 Nullstill</button>
+            </div>
+            
+            <div id="alertBox" class="alert alert-info" style="margin-top:16px">
+              💡 Last opp en kommersiell faktura (PDF/bilde) for automatisk utfylling.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Panel -->
+      <div>
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">📝 Tolldeklarasjon</div>
+            <div class="card-subtitle" id="declarationType">TVINN Import - Norge</div>
+          </div>
+          <div class="card-body">
+            
+            <div class="tabs">
+              <div class="tab active" data-tab="general">Generelt</div>
+              <div class="tab" data-tab="parties">Parter</div>
+              <div class="tab" data-tab="goods">Varer</div>
+              <div class="tab" data-tab="export">Eksport</div>
+            </div>
+
+            <!-- Tab: General -->
+            <div class="tab-content" id="tab-general">
+              <div class="form-section">
+                <div class="section-header">
+                  <div class="section-title">📄 Faktura / Ordre</div>
+                </div>
+                <div class="form-grid form-grid-3">
+                  <div class="form-group">
+                    <label class="form-label">Ordrenummer / PO</label>
+                    <input type="text" class="form-input" id="poNumber" placeholder="Purchase Order">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Servicenummer</label>
+                    <input type="text" class="form-input" id="serviceNumber" placeholder="Service ref">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Fakturadato <span class="required">*</span></label>
+                    <input type="date" class="form-input" id="invDate">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Totalbeløp <span class="required">*</span></label>
+                    <input type="number" step="0.01" class="form-input" id="invAmount" placeholder="0.00">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Valuta</label>
+                    <select class="form-input" id="invCurrency">
+                      <option value="USD">USD - US Dollar</option>
+                      <option value="EUR">EUR - Euro</option>
+                      <option value="GBP">GBP - Britiske Pund</option>
+                      <option value="NOK">NOK - Norske Kroner</option>
+                      <option value="SEK">SEK - Svenske Kroner</option>
+                      <option value="DKK">DKK - Danske Kroner</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Valutakurs til NOK</label>
+                    <input type="number" step="0.0001" class="form-input" id="exchangeRate" placeholder="Auto">
+                  </div>
+                </div>
+              </div>
+
+              <div class="form-section">
+                <div class="section-header">
+                  <div class="section-title">🚚 Transport</div>
+                </div>
+                <div class="form-grid form-grid-3">
+                  <div class="form-group">
+                    <label class="form-label">Incoterms</label>
+                    <select class="form-input" id="incoterms">
+                      <option value="">Velg...</option>
+                      <option value="EXW">EXW - Ex Works</option>
+                      <option value="FCA">FCA - Free Carrier</option>
+                      <option value="CPT">CPT - Carriage Paid To</option>
+                      <option value="DAP">DAP - Delivered at Place</option>
+                      <option value="DDP">DDP - Delivered Duty Paid</option>
+                      <option value="FOB">FOB - Free on Board</option>
+                      <option value="CIF">CIF - Cost Insurance Freight</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Leveringssted</label>
+                    <input type="text" class="form-input" id="deliveryPlace" placeholder="By/destinasjon">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Transportmåte</label>
+                    <select class="form-input" id="transportMode">
+                      <option value="">Velg...</option>
+                      <option value="1">1 - Sjøtransport</option>
+                      <option value="2">2 - Jernbane</option>
+                      <option value="3">3 - Veitransport</option>
+                      <option value="4">4 - Lufttransport</option>
+                      <option value="5">5 - Post</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Fraktbeløp</label>
+                    <input type="number" step="0.01" class="form-input" id="freightAmount" placeholder="0.00">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Opprinnelsesland</label>
+                    <select class="form-input" id="originCountry">
+                      <option value="">Velg...</option>
+                      <option value="US">🇺🇸 USA</option>
+                      <option value="GB">🇬🇧 UK</option>
+                      <option value="DE">🇩🇪 Tyskland</option>
+                      <option value="CN">🇨🇳 Kina</option>
+                      <option value="SE">🇸🇪 Sverige</option>
+                      <option value="NL">🇳🇱 Nederland</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Total vekt (kg)</label>
+                    <input type="number" step="0.01" class="form-input" id="totalWeight" placeholder="0.00">
+                  </div>
+                </div>
+              </div>
+
+              <div class="form-section">
+                <div class="section-header">
+                  <div class="section-title">📦 Dimensjoner</div>
+                </div>
+                <div class="form-grid form-grid-3">
+                  <div class="form-group">
+                    <label class="form-label">Dimensjoner (LxBxH cm)</label>
+                    <input type="text" class="form-input" id="dimensions" placeholder="120 x 80 x 55">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Antall kolli</label>
+                    <input type="number" class="form-input" id="totalPackages" placeholder="1" value="1">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Ekspedisjonsenhet</label>
+                    <input type="text" class="form-input" id="customsOffice" placeholder="441002" value="441002">
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Tab: Parties -->
+            <div class="tab-content hidden" id="tab-parties">
+              <div class="form-section">
+                <div class="section-header">
+                  <div class="section-title">🏭 Avsender (Shipped By)</div>
+                </div>
+                <div class="form-grid form-grid-2">
+                  <div class="form-group span-2">
+                    <label class="form-label">Firmanavn</label>
+                    <input type="text" class="form-input" id="shipperName" placeholder="Avsender firma">
+                  </div>
+                  <div class="form-group span-2">
+                    <label class="form-label">Adresse</label>
+                    <input type="text" class="form-input" id="shipperAddress" placeholder="Adresse">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Land (Ship From)</label>
+                    <select class="form-input" id="shipperCountry">
+                      <option value="">Velg...</option>
+                      <option value="GB">🇬🇧 UK</option>
+                      <option value="US">🇺🇸 USA</option>
+                      <option value="DE">🇩🇪 Tyskland</option>
+                      <option value="CN">🇨🇳 Kina</option>
+                      <option value="NL">🇳🇱 Nederland</option>
+                      <option value="SE">🇸🇪 Sverige</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Telefon</label>
+                    <input type="text" class="form-input" id="shipperPhone" placeholder="+44...">
+                  </div>
+                </div>
+              </div>
+
+              <div class="form-section">
+                <div class="section-header">
+                  <div class="section-title">📬 Mottaker (Consignee / Ship To)</div>
+                </div>
+                <div class="form-grid form-grid-2">
+                  <div class="form-group span-2">
+                    <label class="form-label">Firmanavn</label>
+                    <input type="text" class="form-input" id="consigneeName" placeholder="Mottaker firma">
+                  </div>
+                  <div class="form-group span-2">
+                    <label class="form-label">Adresse</label>
+                    <input type="text" class="form-input" id="consigneeAddress" placeholder="Adresse">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Postnr / By</label>
+                    <input type="text" class="form-input" id="consigneeCity" placeholder="6900 Florø">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Kontaktperson</label>
+                    <input type="text" class="form-input" id="consigneeContact" placeholder="Attn:">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Org.nr</label>
+                    <input type="text" class="form-input" id="consigneeOrg" placeholder="9 siffer" maxlength="9">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">EORI</label>
+                    <input type="text" class="form-input" id="consigneeEORI" placeholder="NO + org.nr">
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Tab: Goods -->
+            <div class="tab-content hidden" id="tab-goods">
+              <div class="form-section">
+                <div class="section-header">
+                  <div class="section-title">📦 Varelinjer</div>
+                  <span class="items-count" id="itemCount">0 varer</span>
+                </div>
+                
+                <div class="items-section">
+                  <div class="items-table-wrap">
+                    <table class="items-table">
+                      <thead>
+                        <tr>
+                          <th style="width:30px">#</th>
+                          <th style="min-width:150px">Beskrivelse</th>
+                          <th style="width:100px">HS-kode</th>
+                          <th style="width:50px">Antall</th>
+                          <th style="width:70px">Enhetspris</th>
+                          <th style="width:80px">Verdi</th>
+                          <th style="width:30px"></th>
+                        </tr>
+                      </thead>
+                      <tbody id="itemsBody">
+                        <tr data-row="1">
+                          <td>1</td>
+                          <td><input type="text" id="item1_desc"></td>
+                          <td><input type="text" id="item1_hs" placeholder="0000000000"></td>
+                          <td><input type="number" id="item1_qty" value="1" min="1"></td>
+                          <td><input type="number" id="item1_unitprice" step="0.01"></td>
+                          <td><input type="number" id="item1_value" step="0.01"></td>
+                          <td><button type="button" class="remove-row" onclick="removeRow(1)">✕</button></td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                  <button type="button" class="btn btn-secondary" onclick="addRow()" style="margin-top:12px;padding:8px 16px;font-size:12px">➕ Legg til varelinje</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Tab: Export -->
+            <div class="tab-content hidden" id="tab-export">
+              <div class="form-section">
+                <div class="export-section">
+                  <div class="export-options" id="exportOptions">
+                    <div class="export-opt selected" data-format="edifact">
+                      <div class="export-opt-icon">📋</div>
+                      <div class="export-opt-label">EDIFACT</div>
+                      <div class="export-opt-desc">TVINN</div>
+                    </div>
+                    <div class="export-opt" data-format="json">
+                      <div class="export-opt-icon">📦</div>
+                      <div class="export-opt-label">JSON</div>
+                      <div class="export-opt-desc">Digitoll</div>
+                    </div>
+                    <div class="export-opt" data-format="csv">
+                      <div class="export-opt-icon">📊</div>
+                      <div class="export-opt-label">CSV</div>
+                      <div class="export-opt-desc">Excel</div>
+                    </div>
+                    <div class="export-opt" data-format="xml">
+                      <div class="export-opt-icon">🌐</div>
+                      <div class="export-opt-label">XML</div>
+                      <div class="export-opt-desc">WCO</div>
+                    </div>
+                  </div>
+                  
+                  <div class="code-preview">
+                    <pre id="exportOutput">Fyll ut skjemaet for å generere eksport...</pre>
+                  </div>
+                  
+                  <div class="export-actions">
+                    <button type="button" class="btn btn-secondary" onclick="copyExport()">📋 Kopier</button>
+                    <button type="button" class="btn btn-primary" onclick="downloadExport()">⬇️ Last ned</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <p><strong>EasyToll Pro</strong> - Tolldeklarasjon for Norden</p>
+      <p>For produksjon: <a href="https://toll.no" target="_blank">toll.no</a> | <a href="https://norstella.no" target="_blank">norstella.no</a></p>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+  
+  <script>
+    // Initialize PDF.js
+    if (typeof pdfjsLib !== 'undefined') {
+      pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    }
+
+    var currentFormat = 'edifact';
+    var currentCountry = 'NO';
+    var rowCount = 1;
+    var extractedItems = [];
+
+    // Elements
+    var uploadZone = document.getElementById('uploadZone');
+    var fileInput = document.getElementById('fileInput');
+    var progressBox = document.getElementById('progressBox');
+    var previewBox = document.getElementById('previewBox');
+    var pdfCanvas = document.getElementById('pdfCanvas');
+    var alertBox = document.getElementById('alertBox');
+    var ocrResults = document.getElementById('ocrResults');
+
+    // Country selector
+    document.querySelectorAll('.country-btn').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        document.querySelectorAll('.country-btn').forEach(function(b) { b.classList.remove('active'); });
+        btn.classList.add('active');
+        currentCountry = btn.dataset.country;
+      });
+    });
+
+    // Tabs
+    document.querySelectorAll('.tab').forEach(function(tab) {
+      tab.addEventListener('click', function() {
+        document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
+        document.querySelectorAll('.tab-content').forEach(function(c) { c.classList.add('hidden'); });
+        tab.classList.add('active');
+        document.getElementById('tab-' + tab.dataset.tab).classList.remove('hidden');
+      });
+    });
+
+    // File upload
+    uploadZone.addEventListener('click', function() { fileInput.click(); });
+    uploadZone.addEventListener('dragover', function(e) { e.preventDefault(); uploadZone.classList.add('dragover'); });
+    uploadZone.addEventListener('dragleave', function(e) { e.preventDefault(); uploadZone.classList.remove('dragover'); });
+    uploadZone.addEventListener('drop', function(e) { 
+      e.preventDefault(); 
+      uploadZone.classList.remove('dragover'); 
+      if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]); 
+    });
+    fileInput.addEventListener('change', function() { if (fileInput.files[0]) handleFile(fileInput.files[0]); });
+
+    function handleFile(file) {
+      document.getElementById('fileName').textContent = file.name;
+      uploadZone.classList.add('has-file');
+      
+      var isPDF = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+      if (isPDF) processPDF(file);
+      else if (file.type.match(/image\//)) processImage(file);
+      else showAlert('error', 'Ugyldig filtype. Bruk PDF, PNG eller JPG.');
+    }
+
+    function processPDF(file) {
+      progressBox.classList.add('active');
+      uploadZone.classList.add('processing');
+      setProgress(5, 'Leser PDF...');
+      
+      var reader = new FileReader();
+      reader.onload = function(e) {
+        var typedArray = new Uint8Array(e.target.result);
+        
+        if (typeof pdfjsLib === 'undefined') {
+          handleError({ message: 'PDF-bibliotek ikke lastet' });
+          return;
+        }
+        
+        setProgress(15, 'Åpner PDF...');
+        
+        pdfjsLib.getDocument(typedArray).promise.then(function(pdf) {
+          setProgress(25, 'Henter side 1...');
+          
+          pdf.getPage(1).then(function(page) {
+            setProgress(35, 'Rendrer til bilde...');
+            
+            var scale = 3.0; // Higher resolution for better OCR
+            var viewport = page.getViewport({ scale: scale });
+            pdfCanvas.width = viewport.width;
+            pdfCanvas.height = viewport.height;
+            var context = pdfCanvas.getContext('2d');
+            
+            page.render({ canvasContext: context, viewport: viewport }).promise.then(function() {
+              setProgress(50, 'Starter OCR...');
+              document.getElementById('previewImg').src = pdfCanvas.toDataURL('image/png');
+              previewBox.classList.add('active');
+              runOCR(pdfCanvas);
+            }).catch(handleError);
+          }).catch(handleError);
+        }).catch(handleError);
+      };
+      reader.readAsArrayBuffer(file);
+    }
+
+    function processImage(file) {
+      progressBox.classList.add('active');
+      uploadZone.classList.add('processing');
+      setProgress(10, 'Leser bilde...');
+      
+      var reader = new FileReader();
+      reader.onload = function(e) {
+        document.getElementById('previewImg').src = e.target.result;
+        previewBox.classList.add('active');
+        setProgress(20, 'Starter OCR...');
+        runOCR(file);
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function runOCR(imageSource) {
+      if (typeof Tesseract === 'undefined') {
+        handleError({ message: 'OCR-motor ikke lastet' });
+        return;
+      }
+      
+      Tesseract.recognize(imageSource, 'eng', {
+        logger: function(m) {
+          if (m.status === 'recognizing text') {
+            var pct = Math.round(50 + m.progress * 45);
+            setProgress(pct, 'Leser tekst... ' + pct + '%');
+          }
+        }
+      }).then(function(result) {
+        setProgress(100, 'Ferdig!');
+        console.log('OCR TEXT:', result.data.text);
+        
+        var extracted = extractCommercialInvoice(result.data.text);
+        showExtractedResults(extracted);
+        
+        setTimeout(function() {
+          progressBox.classList.remove('active');
+          uploadZone.classList.remove('processing');
+          showAlert('success', 'Faktura analysert! ' + extracted.itemCount + ' varelinjer funnet. Sjekk data i fanene.');
+          updateStats();
+          renderExport();
+        }, 500);
+      }).catch(handleError);
+    }
+
+    function extractCommercialInvoice(text) {
+      console.log('Extracting commercial invoice data...');
+      var results = [];
+      
+      // Purchase Order / PO Number
+      var poMatch = text.match(/(?:PURCHASE\s*ORDER\s*(?:NO\.?)?|P\.?O\.?\s*(?:NO\.?|NUMBER)?)\s*[:\s]*([A-Z0-9\-]+)/i);
+      if (poMatch) {
+        setFieldValue('poNumber', poMatch[1]);
+        results.push('PO: ' + poMatch[1]);
+      }
+      
+      // Service Number
+      var serviceMatch = text.match(/(?:SERVICE\s*(?:NUMBER|NO\.?|#))\s*[:\s]*([A-Z0-9\-]+)/i);
+      if (serviceMatch) {
+        setFieldValue('serviceNumber', serviceMatch[1]);
+        results.push('Service: ' + serviceMatch[1]);
+      }
+      
+      // Date (DD/MM/YYYY or similar)
+      var dateMatch = text.match(/(?:DATE)\s*[:\s]*(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{4})/i);
+      if (dateMatch) {
+        var dateStr = dateMatch[3] + '-' + dateMatch[2].padStart(2,'0') + '-' + dateMatch[1].padStart(2,'0');
+        setFieldValue('invDate', dateStr);
+        results.push('Dato: ' + dateMatch[1] + '/' + dateMatch[2] + '/' + dateMatch[3]);
+      }
+      
+      // Total amount
+      var totalMatch = text.match(/(?:TOTAL\s*(?:USD|EUR|GBP)?)\s*[\$€£]?\s*([\d,]+\.?\d*)/i);
+      if (totalMatch) {
+        var amount = totalMatch[1].replace(/,/g, '');
+        setFieldValue('invAmount', amount);
+        results.push('Total: ' + amount);
+      }
+      
+      // Currency
+      if (/USD|\$|US\s*Dollar/i.test(text)) setFieldValue('invCurrency', 'USD');
+      else if (/EUR|€/i.test(text)) setFieldValue('invCurrency', 'EUR');
+      else if (/GBP|£/i.test(text)) setFieldValue('invCurrency', 'GBP');
+      
+      // Incoterms
+      var incoMatch = text.match(/(?:INCOTERMS?)\s*[:\s]*(EXW|FCA|CPT|CIP|DAP|DPU|DDP|FAS|FOB|CFR|CIF)[\s\w]*/i);
+      if (incoMatch) {
+        setFieldValue('incoterms', incoMatch[1].toUpperCase());
+        results.push('Incoterms: ' + incoMatch[1].toUpperCase());
+        
+        // Try to get delivery place from incoterms line
+        var deliveryMatch = text.match(/(?:INCOTERMS?)\s*[:\s]*(?:EXW|FCA|CPT|CIP|DAP|DPU|DDP|FAS|FOB|CFR|CIF)\s+([A-ZÆØÅ]+)/i);
+        if (deliveryMatch) {
+          setFieldValue('deliveryPlace', deliveryMatch[1]);
+          results.push('Leveringssted: ' + deliveryMatch[1]);
+        }
+      }
+      
+      // Ship From country
+      var shipFromMatch = text.match(/(?:SHIP\s*FROM)\s*[:\s]*([A-Z]{2,})/i);
+      if (shipFromMatch) {
+        var countryCode = mapCountry(shipFromMatch[1]);
+        if (countryCode) {
+          setFieldValue('shipperCountry', countryCode);
+          results.push('Fra land: ' + countryCode);
+        }
+      }
+      
+      // Shipper / Shipped By
+      var shipperMatch = text.match(/(?:SHIPPED\s*BY|SHIPPER)\s*[:\s]*([A-Za-z0-9\s\.,]+(?:Ltd|Limited|Inc|GmbH|AS|AB))/i);
+      if (shipperMatch) {
+        setFieldValue('shipperName', shipperMatch[1].trim());
+        results.push('Avsender: ' + shipperMatch[1].trim().substring(0,30) + '...');
+      }
+      
+      // Consignee
+      var consigneeMatch = text.match(/(?:CONSIGNEE|SHIP\s*TO)\s*[:\s]*([A-Za-zÆØÅæøå0-9\s\.,\-]+?)(?:\n|Botnaneset|Street|Road|Avenue)/i);
+      if (consigneeMatch) {
+        setFieldValue('consigneeName', consigneeMatch[1].trim());
+        results.push('Mottaker: ' + consigneeMatch[1].trim());
+      }
+      
+      // Weight
+      var weightMatch = text.match(/(?:WEIGHT|GROSS\s*WEIGHT)\s*[:\s]*(\d+(?:[.,]\d+)?)\s*(?:Kg|KG|kg)/i);
+      if (weightMatch) {
+        setFieldValue('totalWeight', weightMatch[1].replace(',', '.'));
+        results.push('Vekt: ' + weightMatch[1] + ' kg');
+      }
+      
+      // Dimensions
+      var dimMatch = text.match(/(?:DIMENSION|SIZE)\s*[:\s]*(\d+\s*x\s*\d+\s*x\s*\d+)\s*(?:cm)?/i);
+      if (dimMatch) {
+        setFieldValue('dimensions', dimMatch[1]);
+        results.push('Dimensjoner: ' + dimMatch[1]);
+      }
+      
+      // Country of Origin
+      var originMatch = text.match(/(?:COUNTRY\s*OF\s*ORIGI?N)\s*[:\s]*([A-Z]{2,})/i);
+      if (originMatch) {
+        var originCode = mapCountry(originMatch[1]);
+        if (originCode) {
+          setFieldValue('originCountry', originCode);
+          results.push('Opprinnelsesland: ' + originCode);
+        }
+      }
+      
+      // Extract line items with HS codes
+      extractedItems = [];
+      var hsPattern = /(\d+)\s+(\d+)\s+([A-Za-z0-9\s\-\/\"\'\(\)\.]+?)\s+(?:HS\s*CODE\s*[:\s]*)?(\d{10}|\d{8})\s+([\d,.]+)\s+([\d,.]+)/gi;
+      var match;
+      while ((match = hsPattern.exec(text)) !== null) {
+        extractedItems.push({
+          line: match[1],
+          qty: match[2],
+          desc: match[3].trim(),
+          hs: match[4],
+          unitPrice: match[5].replace(',', '.'),
+          value: match[6].replace(',', '.').replace(/,/g, '')
+        });
+      }
+      
+      // Alternative pattern if first doesn't work
+      if (extractedItems.length === 0) {
+        var altPattern = /(\d{10})\s+/g;
+        var hsCodes = text.match(altPattern);
+        if (hsCodes) {
+          results.push('HS-koder funnet: ' + hsCodes.length);
+        }
+      }
+      
+      // Populate item rows
+      if (extractedItems.length > 0) {
+        populateItemRows(extractedItems);
+        results.push('Varelinjer: ' + extractedItems.length);
+      }
+      
+      return { results: results, itemCount: extractedItems.length };
+    }
+
+    function mapCountry(name) {
+      var map = {
+        'UK': 'GB', 'UNITED KINGDOM': 'GB', 'BRITAIN': 'GB', 'ENGLAND': 'GB', 'SCOTLAND': 'GB',
+        'USA': 'US', 'UNITED STATES': 'US', 'AMERICA': 'US',
+        'GERMANY': 'DE', 'DEUTSCHLAND': 'DE',
+        'CHINA': 'CN', 'CHINESE': 'CN',
+        'NORWAY': 'NO', 'NORGE': 'NO',
+        'SWEDEN': 'SE', 'SVERIGE': 'SE',
+        'DENMARK': 'DK', 'DANMARK': 'DK',
+        'NETHERLANDS': 'NL', 'HOLLAND': 'NL',
+        'FRANCE': 'FR'
+      };
+      var upper = name.toUpperCase().trim();
+      return map[upper] || (upper.length === 2 ? upper : null);
+    }
+
+    function populateItemRows(items) {
+      var tbody = document.getElementById('itemsBody');
+      tbody.innerHTML = '';
+      
+      items.forEach(function(item, i) {
+        var tr = document.createElement('tr');
+        tr.setAttribute('data-row', i + 1);
+        tr.innerHTML = '<td>' + (i + 1) + '</td>' +
+          '<td><input type="text" id="item' + (i+1) + '_desc" value="' + escapeHtml(item.desc) + '" class="filled"></td>' +
+          '<td><input type="text" id="item' + (i+1) + '_hs" value="' + item.hs + '" class="filled"></td>' +
+          '<td><input type="number" id="item' + (i+1) + '_qty" value="' + item.qty + '" class="filled"></td>' +
+          '<td><input type="number" id="item' + (i+1) + '_unitprice" value="' + item.unitPrice + '" step="0.01" class="filled"></td>' +
+          '<td><input type="number" id="item' + (i+1) + '_value" value="' + item.value + '" step="0.01" class="filled"></td>' +
+          '<td><button type="button" class="remove-row" onclick="removeRow(' + (i+1) + ')">✕</button></td>';
+        tbody.appendChild(tr);
+      });
+      
+      rowCount = items.length;
+    }
+
+    function escapeHtml(str) {
+      return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    function showExtractedResults(extracted) {
+      var list = document.getElementById('ocrResultsList');
+      list.innerHTML = extracted.results.map(function(r) { return '<li>' + r + '</li>'; }).join('');
+      ocrResults.classList.add('active');
+    }
+
+    function handleError(err) {
+      console.error('Error:', err);
+      progressBox.classList.remove('active');
+      uploadZone.classList.remove('processing');
+      showAlert('error', 'Feil: ' + (err.message || 'Ukjent feil'));
+    }
+
+    function setProgress(pct, status) {
+      document.getElementById('progressFill').style.width = pct + '%';
+      document.getElementById('progressStatus').textContent = status;
+    }
+
+    function setFieldValue(id, value) {
+      var el = document.getElementById(id);
+      if (el && value) {
+        el.value = value;
+        el.classList.add('filled');
+      }
+    }
+
+    // Demo data (based on the NOV invoice)
+    document.getElementById('demoBtn').addEventListener('click', function() {
+      setFieldValue('poNumber', 'EM04-25-1165P');
+      setFieldValue('serviceNumber', 'XLS-941637');
+      setFieldValue('invDate', '2025-11-17');
+      setFieldValue('invAmount', '7060.46');
+      setFieldValue('invCurrency', 'USD');
+      setFieldValue('incoterms', 'DAP');
+      setFieldValue('deliveryPlace', 'FLORØ');
+      setFieldValue('shipperName', 'National Oilwell Varco UK Limited');
+      setFieldValue('shipperAddress', 'Badentoy Crescent, Portlethen, Aberdeen, AB12 4YD');
+      setFieldValue('shipperCountry', 'GB');
+      setFieldValue('consigneeName', 'Equinor Florø');
+      setFieldValue('consigneeAddress', 'Botnaneset, B-11');
+      setFieldValue('consigneeCity', '6900 Florø');
+      setFieldValue('consigneeContact', 'Vegard Hovland');
+      setFieldValue('totalWeight', '50');
+      setFieldValue('dimensions', '120 x 80 x 55');
+      setFieldValue('originCountry', 'US');
+      
+      // Demo items
+      var demoItems = [
+        { line: '1', qty: '1', desc: 'Pelican Case', hs: '3923109090', unitPrice: '100.00', value: '100.00' },
+        { line: '2', qty: '1', desc: 'Screwdriver', hs: '8205400000', unitPrice: '7.86', value: '7.86' },
+        { line: '3', qty: '2', desc: 'O-Ring Roller', hs: '8205598000', unitPrice: '7.25', value: '14.50' },
+        { line: '4', qty: '5', desc: '1/2" Drive x 3/8" Allen Socket', hs: '8204200000', unitPrice: '8.59', value: '42.95' },
+        { line: '5', qty: '1', desc: 'Pressure Gauge', hs: '9026208000', unitPrice: '40.00', value: '40.00' },
+        { line: '6', qty: '96', desc: 'Viperlock Screw', hs: '7318159585', unitPrice: '27.49', value: '2639.04' }
+      ];
+      populateItemRows(demoItems);
+      
+      showAlert('success', 'Demodata lastet (basert på NOV-faktura)!');
+      updateStats();
+      renderExport();
+    });
+
+    // Reset
+    document.getElementById('resetBtn').addEventListener('click', function() {
+      document.querySelectorAll('.form-input').forEach(function(el) {
+        if (el.type === 'date') el.value = '';
+        else if (el.tagName === 'SELECT') el.selectedIndex = 0;
+        else if (!el.readOnly) el.value = '';
+        el.classList.remove('filled');
+      });
+      
+      document.getElementById('itemsBody').innerHTML = '<tr data-row="1"><td>1</td><td><input type="text" id="item1_desc"></td><td><input type="text" id="item1_hs" placeholder="0000000000"></td><td><input type="number" id="item1_qty" value="1" min="1"></td><td><input type="number" id="item1_unitprice" step="0.01"></td><td><input type="number" id="item1_value" step="0.01"></td><td><button type="button" class="remove-row" onclick="removeRow(1)">✕</button></td></tr>';
+      rowCount = 1;
+      
+      previewBox.classList.remove('active');
+      uploadZone.classList.remove('has-file');
+      ocrResults.classList.remove('active');
+      
+      showAlert('info', 'Nullstilt. Last opp ny faktura.');
+      updateStats();
+      renderExport();
+    });
+
+    // Row management
+    function addRow() {
+      rowCount++;
+      var tbody = document.getElementById('itemsBody');
+      var tr = document.createElement('tr');
+      tr.setAttribute('data-row', rowCount);
+      tr.innerHTML = '<td>' + rowCount + '</td>' +
+        '<td><input type="text" id="item' + rowCount + '_desc"></td>' +
+        '<td><input type="text" id="item' + rowCount + '_hs" placeholder="0000000000"></td>' +
+        '<td><input type="number" id="item' + rowCount + '_qty" value="1" min="1"></td>' +
+        '<td><input type="number" id="item' + rowCount + '_unitprice" step="0.01"></td>' +
+        '<td><input type="number" id="item' + rowCount + '_value" step="0.01"></td>' +
+        '<td><button type="button" class="remove-row" onclick="removeRow(' + rowCount + ')">✕</button></td>';
+      tbody.appendChild(tr);
+      updateStats();
+    }
+    window.addRow = addRow;
+
+    function removeRow(num) {
+      var row = document.querySelector('tr[data-row="' + num + '"]');
+      if (row && document.querySelectorAll('#itemsBody tr').length > 1) row.remove();
+      updateStats();
+    }
+    window.removeRow = removeRow;
+
+    // Update stats
+    function updateStats() {
+      var rows = document.querySelectorAll('#itemsBody tr');
+      var totalValue = 0, itemCount = 0;
+      
+      rows.forEach(function(row) {
+        var num = row.getAttribute('data-row');
+        var value = parseFloat(document.getElementById('item' + num + '_value')?.value) || 0;
+        var desc = document.getElementById('item' + num + '_desc')?.value;
+        
+        totalValue += value;
+        if (desc) itemCount++;
+      });
+      
+      var weight = parseFloat(document.getElementById('totalWeight')?.value) || 0;
+      var currency = document.getElementById('invCurrency')?.value || 'USD';
+      
+      document.getElementById('statItems').textContent = itemCount;
+      document.getElementById('statWeight').textContent = weight + ' kg';
+      document.getElementById('statValue').textContent = totalValue.toLocaleString('no-NO', {minimumFractionDigits: 2}) + ' ' + currency;
+      document.getElementById('statStatus').textContent = itemCount > 0 ? '✓' : '⏳';
+      document.getElementById('itemCount').textContent = itemCount + ' varer';
+    }
+
+    // Export format
+    document.getElementById('exportOptions').addEventListener('click', function(e) {
+      var opt = e.target.closest('.export-opt');
+      if (opt) {
+        document.querySelectorAll('.export-opt').forEach(function(o) { o.classList.remove('selected'); });
+        opt.classList.add('selected');
+        currentFormat = opt.dataset.format;
+        renderExport();
+      }
+    });
+
+    function getFormData() {
+      var items = [];
+      document.querySelectorAll('#itemsBody tr').forEach(function(row) {
+        var num = row.getAttribute('data-row');
+        var desc = document.getElementById('item' + num + '_desc')?.value;
+        if (desc) {
+          items.push({
+            desc: desc,
+            hs: document.getElementById('item' + num + '_hs')?.value || '',
+            qty: document.getElementById('item' + num + '_qty')?.value || '1',
+            unitPrice: document.getElementById('item' + num + '_unitprice')?.value || '0',
+            value: document.getElementById('item' + num + '_value')?.value || '0'
+          });
+        }
+      });
+      
+      return {
+        poNumber: document.getElementById('poNumber').value,
+        serviceNumber: document.getElementById('serviceNumber').value,
+        invDate: document.getElementById('invDate').value,
+        invAmount: document.getElementById('invAmount').value,
+        invCurrency: document.getElementById('invCurrency').value,
+        incoterms: document.getElementById('incoterms').value,
+        deliveryPlace: document.getElementById('deliveryPlace').value,
+        transportMode: document.getElementById('transportMode').value,
+        totalWeight: document.getElementById('totalWeight').value,
+        dimensions: document.getElementById('dimensions').value,
+        originCountry: document.getElementById('originCountry').value,
+        customsOffice: document.getElementById('customsOffice').value,
+        shipperName: document.getElementById('shipperName').value,
+        shipperAddress: document.getElementById('shipperAddress').value,
+        shipperCountry: document.getElementById('shipperCountry').value,
+        consigneeName: document.getElementById('consigneeName').value,
+        consigneeAddress: document.getElementById('consigneeAddress').value,
+        consigneeCity: document.getElementById('consigneeCity').value,
+        consigneeOrg: document.getElementById('consigneeOrg').value,
+        items: items,
+        country: currentCountry
+      };
+    }
+
+    function generateEDIFACT(d) {
+      var dt = d.invDate ? d.invDate.replace(/-/g, '') : new Date().toISOString().slice(0,10).replace(/-/g,'');
+      var ref = (d.consigneeOrg || '123456789') + dt + '0001';
+      
+      var lines = [];
+      lines.push("UNA:+.? '");
+      lines.push("UNB+UNOC:3+" + (d.consigneeOrg || 'SENDER') + ":ZZZ+TOLLETATEN:ZZZ+" + dt + ":1200+" + ref + "'");
+      lines.push("UNH+1+CUSDEC:D:96B:UN:TOLL01'");
+      lines.push("BGM+929+" + ref + "+9'");
+      lines.push("LOC+22+" + (d.customsOffice || '441002') + "'");
+      lines.push("DTM+137:" + dt + ":102'");
+      
+      if (d.poNumber) lines.push("RFF+ON:" + d.poNumber + "'");
+      if (d.serviceNumber) lines.push("RFF+SS:" + d.serviceNumber + "'");
+      
+      if (d.incoterms) lines.push("TOD+6++" + d.incoterms + "'");
+      if (d.transportMode) lines.push("TDT+20++++" + d.transportMode + "'");
+      
+      if (d.shipperName) lines.push("NAD+EX+++" + d.shipperName.substring(0,35) + "++++" + (d.shipperCountry || '') + "'");
+      if (d.consigneeName) lines.push("NAD+IM+" + (d.consigneeOrg || '') + ":160++" + d.consigneeName.substring(0,35) + "++++NO'");
+      
+      if (d.invAmount) lines.push("MOA+79:" + d.invAmount + ":" + (d.invCurrency || 'USD') + "'");
+      
+      d.items.forEach(function(item, i) {
+        lines.push("LIN+" + (i + 1) + "'");
+        if (item.hs) lines.push("TAX+COT+" + item.hs + "'");
+        if (item.desc) lines.push("FTX+AAA+++" + item.desc.substring(0,70) + "'");
+        if (d.originCountry) lines.push("LOC+27+" + d.originCountry + "'");
+        if (item.qty) lines.push("QTY+21:" + item.qty + "'");
+        if (item.value) lines.push("MOA+38:" + item.value + ":" + (d.invCurrency || 'USD') + "'");
+      });
+      
+      lines.push("CNT+2:" + d.items.length + "'");
+      if (d.totalWeight) lines.push("CNT+7:" + d.totalWeight + "'");
+      lines.push("UNT+" + (lines.length + 1) + "+1'");
+      lines.push("UNZ+1+" + ref + "'");
+      
+      return lines.join('\n');
+    }
+
+    function generateJSON(d) {
+      return JSON.stringify({
+        meta: { format: 'Digitoll', version: '1.0', country: d.country },
+        ordre: { poNummer: d.poNumber, serviceNummer: d.serviceNumber },
+        faktura: { dato: d.invDate, belop: d.invAmount, valuta: d.invCurrency },
+        avsender: { navn: d.shipperName, adresse: d.shipperAddress, land: d.shipperCountry },
+        mottaker: { navn: d.consigneeName, adresse: d.consigneeAddress, by: d.consigneeCity, orgnr: d.consigneeOrg },
+        levering: { incoterms: d.incoterms, sted: d.deliveryPlace },
+        gods: { vekt: d.totalWeight, dimensjoner: d.dimensions, opprinnelse: d.originCountry },
+        varelinjer: d.items
+      }, null, 2);
+    }
+
+    function generateCSV(d) {
+      var lines = ['PO;' + d.poNumber, 'Dato;' + d.invDate, 'Total;' + d.invAmount + ' ' + d.invCurrency, 'Avsender;' + d.shipperName, 'Mottaker;' + d.consigneeName, '', 'Linje;Beskrivelse;HS-kode;Antall;Enhetspris;Verdi'];
+      d.items.forEach(function(item, i) {
+        lines.push((i+1) + ';"' + item.desc + '";' + item.hs + ';' + item.qty + ';' + item.unitPrice + ';' + item.value);
+      });
+      return lines.join('\n');
+    }
+
+    function generateXML(d) {
+      var xml = '<?xml version="1.0"?>\n<CustomsDeclaration>\n';
+      xml += '  <PurchaseOrder>' + (d.poNumber || '') + '</PurchaseOrder>\n';
+      xml += '  <Date>' + (d.invDate || '') + '</Date>\n';
+      xml += '  <TotalAmount currency="' + (d.invCurrency || 'USD') + '">' + (d.invAmount || '0') + '</TotalAmount>\n';
+      xml += '  <Shipper country="' + (d.shipperCountry || '') + '">' + (d.shipperName || '') + '</Shipper>\n';
+      xml += '  <Consignee>' + (d.consigneeName || '') + '</Consignee>\n';
+      xml += '  <Incoterms>' + (d.incoterms || '') + '</Incoterms>\n';
+      xml += '  <Weight unit="kg">' + (d.totalWeight || '0') + '</Weight>\n';
+      xml += '  <CountryOfOrigin>' + (d.originCountry || '') + '</CountryOfOrigin>\n';
+      xml += '  <Items>\n';
+      d.items.forEach(function(item, i) {
+        xml += '    <Item line="' + (i+1) + '">\n';
+        xml += '      <Description>' + (item.desc || '') + '</Description>\n';
+        xml += '      <HSCode>' + (item.hs || '') + '</HSCode>\n';
+        xml += '      <Quantity>' + (item.qty || '1') + '</Quantity>\n';
+        xml += '      <Value>' + (item.value || '0') + '</Value>\n';
+        xml += '    </Item>\n';
+      });
+      xml += '  </Items>\n</CustomsDeclaration>';
+      return xml;
+    }
+
+    function renderExport() {
+      var d = getFormData();
+      var output = '';
+      switch (currentFormat) {
+        case 'edifact': output = generateEDIFACT(d); break;
+        case 'json': output = generateJSON(d); break;
+        case 'csv': output = generateCSV(d); break;
+        case 'xml': output = generateXML(d); break;
+      }
+      document.getElementById('exportOutput').textContent = output;
+    }
+
+    function copyExport() {
+      var text = document.getElementById('exportOutput').textContent;
+      navigator.clipboard.writeText(text).then(function() { showAlert('success', 'Kopiert!'); });
+    }
+    window.copyExport = copyExport;
+
+    function downloadExport() {
+      var text = document.getElementById('exportOutput').textContent;
+      var ext = { edifact: 'edi', json: 'json', csv: 'csv', xml: 'xml' }[currentFormat];
+      var blob = new Blob([text], { type: 'text/plain' });
+      var a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'tolldeklarasjon.' + ext;
+      a.click();
+    }
+    window.downloadExport = downloadExport;
+
+    function showAlert(type, msg) {
+      var icons = { info: '💡', success: '✅', error: '❌', warning: '⚠️' };
+      alertBox.className = 'alert alert-' + type;
+      alertBox.innerHTML = icons[type] + ' ' + msg;
+    }
+
+    document.addEventListener('input', function() { updateStats(); renderExport(); });
+    updateStats();
+    renderExport();
+  </script>
+</body>
+</html>
